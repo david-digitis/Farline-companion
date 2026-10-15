@@ -1,0 +1,18 @@
+{
+	"Name": "Farline",
+	"Description": "Les touches de votre Stream Deck appuient sur les commandes de Farline et affichent ce que montre son HUD, par une connexion locale avec le jeu. Rien ne sort de votre PC.",
+	"com.david-digitis.farline-companion.command": {
+		"Name": "Commande",
+		"Tooltip": "Appuie sur une commande du jeu, comme le ferait sa touche."
+	},
+	"com.david-digitis.farline-companion.value": {
+		"Name": "Valeur",
+		"Tooltip": "Affiche une valeur que montre le HUD du jeu : vitesse, convergence, train..."
+	},
+	"Localization": {
+		"game_off": "Jeu fermé",
+		"unpaired": "Jeu ouvert, non appairé : tapez le code affiché par le jeu",
+		"pair_short": "Appairer",
+		"paired": "Appairé"
+	}
+}

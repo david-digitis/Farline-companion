@@ -1,0 +1,61 @@
+{
+	"Name": "Farline",
+	"Version": "0.1.0.0",
+	"Author": "Hatalar",
+	"Actions": [
+		{
+			"Name": "Command",
+			"UUID": "com.david-digitis.farline-companion.command",
+			"Icon": "imgs/actions/command",
+			"Tooltip": "Presses one of the game's commands, as its key would.",
+			"PropertyInspectorPath": "ui/command.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/command-key",
+					"TitleAlignment": "bottom",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
+			"Name": "Value",
+			"UUID": "com.david-digitis.farline-companion.value",
+			"Icon": "imgs/actions/value",
+			"Tooltip": "Shows one value the game's HUD shows: speed, convergence, gear...",
+			"PropertyInspectorPath": "ui/value.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/value-key",
+					"TitleAlignment": "bottom",
+					"ShowTitle": false
+				}
+			]
+		}
+	],
+	"Category": "Farline",
+	"CategoryIcon": "imgs/plugin/category",
+	"CodePath": "bin/plugin.js",
+	"Description": "Your Stream Deck keys press Farline's commands and show what its HUD shows, over a local connection with the game. Nothing leaves your PC.",
+	"Icon": "imgs/plugin/marketplace",
+	"SDKVersion": 3,
+	"Software": {
+		"MinimumVersion": "7.1"
+	},
+	"OS": [
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"Nodejs": {
+		"Version": "24",
+		"Debug": "disabled"
+	},
+	"UUID": "com.david-digitis.farline-companion"
+}

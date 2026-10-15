@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Farline: Value</title>
+	<link rel="stylesheet" href="pi.css" />
+</head>
+<body data-kind="value">
+	<div class="row">
+		<span class="label" data-text="link">Game</span>
+		<span id="status" class="status off">-</span>
+	</div>
+	<p id="waiting" class="hint" data-text="waiting"></p>
+	<div id="pairing" hidden>
+		<div class="row">
+			<label class="label" for="code" data-text="code">Code</label>
+			<input id="code" inputmode="numeric" maxlength="6" autocomplete="off" />
+			<button id="pair" data-text="pair">Pair</button>
+		</div>
+		<p class="hint" data-text="hint"></p>
+	</div>
+	<div class="row">
+		<label id="choice-label" class="label" for="choice">Value</label>
+		<select id="choice" disabled></select>
+	</div>
+	<p id="choice-empty" class="hint"></p>
+	<div id="distance-row" class="row" hidden>
+		<label class="label" for="distance" data-text="distance">Distance (m)</label>
+		<input id="distance" type="number" min="0" step="50" value="500" />
+	</div>
+	<div class="row">
+		<span class="label"></span>
+		<button id="forget" class="quiet" data-text="forget" hidden>Forget</button>
+	</div>
+	<script src="pi.js"></script>
+</body>
+</html>

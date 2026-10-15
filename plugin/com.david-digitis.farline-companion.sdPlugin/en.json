@@ -1,0 +1,18 @@
+{
+	"Name": "Farline",
+	"Description": "Your Stream Deck keys press Farline's commands and show what its HUD shows, over a local connection with the game. Nothing leaves your PC.",
+	"com.david-digitis.farline-companion.command": {
+		"Name": "Command",
+		"Tooltip": "Presses one of the game's commands, as its key would."
+	},
+	"com.david-digitis.farline-companion.value": {
+		"Name": "Value",
+		"Tooltip": "Shows one value the game's HUD shows: speed, convergence, gear..."
+	},
+	"Localization": {
+		"game_off": "Game off",
+		"unpaired": "Game running, not paired: type the code the game shows",
+		"pair_short": "Pair",
+		"paired": "Paired"
+	}
+}

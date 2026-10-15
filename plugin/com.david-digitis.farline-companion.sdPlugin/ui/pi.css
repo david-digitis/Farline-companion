@@ -1,0 +1,12 @@
+/* The game's colours (palette.ts): dark screen, ink, mint = good, coral = trouble. */
+body { background: #2d2d2d; color: #ece8e1; font: 12px "Segoe UI", sans-serif; margin: 8px 12px; }
+.row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.label { width: 96px; flex: none; color: #ece8e199; }
+select, input { flex: 1; background: #3d3d3d; color: #ece8e1; border: 1px solid #555; padding: 3px; }
+#code { letter-spacing: 3px; max-width: 80px; }
+button { background: #3d3d3d; color: #ece8e1; border: 1px solid #3ee6b4; padding: 3px 10px; cursor: pointer; }
+button.quiet { border-color: #555; }
+.hint { color: #ece8e199; margin: 2px 0 8px 104px; }
+.status.paired { color: #3ee6b4; }
+.status.unpaired { color: #ff5e5b; }
+.status.off, .status.connecting { color: #ece8e161; }
