@@ -4,7 +4,8 @@
 
 A Stream Deck plugin and master profiles for **Farline**. Your keys press the game's commands and
 show what its HUD shows (speed, convergence, landing gear, energy...), over a connection between the
-game and the Stream Deck software **on your own PC**. Nothing leaves your PC.
+game and the Stream Deck software **on your own PC**. Nothing leaves your PC. The pictograms are the
+game's own, Material Symbols Sharp (Apache 2.0, see [CREDITS.md](CREDITS.md)).
 
 ## Install
 
@@ -34,7 +35,8 @@ Once the companion is released, the **Guides** page of the game has the details.
 
 Un plugin Stream Deck et des profils maîtres pour **Farline**. Vos touches appuient sur les commandes
 du jeu et affichent ce que montre son HUD (vitesse, convergence, train, énergie...), par une connexion
-entre le jeu et le logiciel Stream Deck **sur votre propre PC**. Rien ne sort de votre PC.
+entre le jeu et le logiciel Stream Deck **sur votre propre PC**. Rien ne sort de votre PC. Les pictos
+sont ceux du jeu, Material Symbols Sharp (Apache 2.0, voir [CREDITS.md](CREDITS.md)).
 
 ### Installer
 
