@@ -5,7 +5,8 @@
 const TEXT = {
 	en: {
 		link: "Game", code: "Code shown in the game", pair: "Pair", forget: "Forget this Stream Deck",
-		command: "Command", value: "Value", distance: "Distance (m)",
+		command: "Command", value: "Value", distance: "Distance (m)", show: "Show",
+		auto: "Automatic", autoOf: "Automatic: ", nothing: "Nothing (the command only)",
 		waiting: "Start the game, open Controls > Companion and tick Enable the companion.",
 		pick: "Pair first: the list comes from the game.",
 		hint: "In the game: Controls > Companion > Pair a device. The code is good for two minutes.",
@@ -15,7 +16,8 @@ const TEXT = {
 	},
 	fr: {
 		link: "Jeu", code: "Code affiché dans le jeu", pair: "Appairer", forget: "Oublier ce Stream Deck",
-		command: "Commande", value: "Valeur", distance: "Distance (m)",
+		command: "Commande", value: "Valeur", distance: "Distance (m)", show: "Afficher",
+		auto: "Automatique", autoOf: "Automatique : ", nothing: "Rien (la commande seule)",
 		waiting: "Lancez le jeu, ouvrez Commandes > Companion et cochez Activer le companion.",
 		pick: "Appairez d'abord : la liste vient du jeu.",
 		hint: "Dans le jeu : Commandes > Companion > Appairer un appareil. Le code vaut deux minutes.",
@@ -77,6 +79,39 @@ function fillChoices(message) {
 	}
 }
 
+/** The state a command key shows: automatic (the plugin's table), nothing, or one field. */
+function fillShow(message) {
+	const list = el("show");
+	if (!list) {
+		return;
+	}
+	const chosen = message.settings.show ?? "";
+	const command = message.settings.id ?? "";
+	const labels = new Map(message.fields.flatMap((g) => g.items.map((i) => [i.id, i.label])));
+	const auto = message.states[command];
+	const options = [["", auto ? words().autoOf + (labels.get(auto) ?? auto) : words().auto], ["none", words().nothing]];
+	list.replaceChildren(...options.map(([id, label]) => {
+		const option = document.createElement("option");
+		option.value = id;
+		option.textContent = label;
+		option.selected = id === chosen;
+		return option;
+	}));
+	for (const group of message.fields) {
+		const parent = document.createElement("optgroup");
+		parent.label = group.group || words().value;
+		for (const item of group.items) {
+			const option = document.createElement("option");
+			option.value = item.id;
+			option.textContent = item.label;
+			option.selected = item.id === chosen;
+			parent.appendChild(option);
+		}
+		list.appendChild(parent);
+	}
+	list.disabled = message.fields.length === 0;
+}
+
 function draw(message) {
 	last = message;
 	lang = String(message.language || "en").startsWith("fr") ? "fr" : "en";
@@ -95,11 +130,15 @@ function draw(message) {
 	el("forget").hidden = message.status !== "paired";
 	el("choice-empty").textContent = w.pick;
 	fillChoices(message);
+	fillShow(message);
 }
 
 function choose() {
 	const id = el("choice").value;
 	const payload = { t: "choose", id };
+	if (el("show")) {
+		payload.show = el("show").value;
+	}
 	if (id === "convergence") {
 		payload.value = Number(el("distance").value) || 500;
 	}
@@ -117,6 +156,7 @@ function wire() {
 	el("forget").addEventListener("click", () => toPlugin({ t: "forget" }));
 	el("choice").addEventListener("change", choose);
 	el("distance").addEventListener("change", choose);
+	el("show")?.addEventListener("change", choose);
 }
 
 // Called by the Stream Deck software when it opens the inspector.
