@@ -1,7 +1,8 @@
 // "Command": a key that presses one of the game's commands (an action of its Controls page, or
 // the convergence). Its setting is the command's id, chosen in the Property Inspector from the
 // schema the game sent; for the convergence distance, a value in metres too.
-// A refused press turns the key coral for REFUSED_MS with the game's reason.
+// A refused press turns the key coral for REFUSED_MS with the game's reason. A combined key (KNIFE-1314)
+// also shows the state its command changes (states.ts; settings.show: another field, or "none").
 
 import streamDeck, {
 	action, type KeyAction, type KeyDownEvent, type SendToPluginEvent, SingletonAction,
@@ -11,24 +12,28 @@ import type { JsonObject } from "@elgato/utils";
 
 import { language, link, pairingMessage, sendInspector, t } from "../hub.js";
 import { commandIcon, NAV_ICONS } from "../icons.js";
-import { commandKey, idleKey, refusedKey } from "../render.js";
-import { findCommand, labelOf } from "../schema.js";
+import { comboKey, commandKey, idleKey, refusedKey } from "../render.js";
+import { findCommand, findField, labelOf, type Value } from "../schema.js";
+import { shownField } from "../states.js";
 import { Painter } from "./painter.js";
 
 const REFUSED_MS = 600;
 
-type CommandSettings = { id?: string; value?: number };
+type CommandSettings = { id?: string; value?: number; show?: string };
 
 @action({ UUID: "com.david-digitis.farline-companion.command" })
 export class CommandAction extends SingletonAction<CommandSettings> {
 	private readonly painter = new Painter();
 	private readonly flashing = new Set<string>();
+	/** key id -> the field it shows, so a state message redraws only the keys it touches. */
+	private readonly shows = new Map<string, string>();
 
 	constructor() {
 		super();
 		link.on("status", () => this.redrawAll());
 		link.on("schema", () => this.redrawAll());
 		link.on("refused", (refusal: { id: string; why: string }) => this.refused(refusal));
+		link.on("state", (changes: Record<string, Value>) => this.changed(changes));
 	}
 
 	override onWillAppear(ev: WillAppearEvent<CommandSettings>): void {
@@ -39,6 +44,7 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 
 	override onWillDisappear(ev: WillDisappearEvent<CommandSettings>): void {
 		this.painter.forget(ev.action.id);
+		this.shows.delete(ev.action.id);
 	}
 
 	override async onKeyDown(ev: KeyDownEvent<CommandSettings>): Promise<void> {
@@ -62,6 +68,9 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 			settings.id = String(payload.id ?? "");
 			if (typeof payload.value === "number") {
 				settings.value = payload.value;
+			}
+			if (typeof payload.show === "string") {
+				settings.show = payload.show;
 			}
 			await ev.action.setSettings(settings);
 			if (ev.action.isKey()) {
@@ -89,9 +98,25 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : link.status === "outdated" ? t("outdated_short") : t("game_off"), NAV_ICONS.idle));
 			return;
 		}
-		const command = findCommand(link.schema, settings.id ?? "");
-		const label = command ? labelOf(command, language()) : (settings.id ?? "?");
-		this.painter.paint(key, commandKey(label, commandIcon(settings.id ?? ""), command?.kind === "set" ? `${settings.value ?? ""} m` : ""));
+		const id = settings.id ?? "";
+		const command = findCommand(link.schema, id);
+		const label = command ? labelOf(command, language()) : (id === "" ? "?" : id);
+		const detail = command?.kind === "set" ? `${settings.value ?? ""} m` : "";
+		const icon = commandIcon(id);
+		const show = shownField(id, settings.show);
+		const field = show !== "" ? findField(link.schema, show) : undefined;
+		this.shows.set(key.id, field ? show : "");
+		this.painter.paint(key, icon !== null && field
+			? comboKey(label, icon, field, link.state.get(show), detail)
+			: commandKey(label, icon, detail));
+	}
+
+	private changed(changes: Record<string, Value>): void {
+		for (const key of this.actions) {
+			if (key.isKey() && !this.flashing.has(key.id) && (this.shows.get(key.id) ?? "") in changes) {
+				void key.getSettings().then((settings) => this.redraw(key, settings));
+			}
+		}
 	}
 
 	private refused(refusal: { id: string; why: string }): void {

@@ -154,6 +154,37 @@ export function commandKey(label: string, icon: Icon | null = null, detail = "")
 		+ block(lines, lines.length > 1 ? 112 : 116, 12, 15, INK_DIM));
 }
 
+/** A state as a flag: true / false for a bool or an "on" / "off" word, null otherwise. */
+export function flagOf(value: Value | undefined): boolean | null {
+	if (typeof value === "boolean") {
+		return value;
+	}
+	return value === "on" ? true : value === "off" ? false : null;
+}
+
+/** A combined key (chosen on the board of KNIFE-1314, « la 3 »): a command that shows the state it
+ *  changes. The pictogram lights up in its accent (mint when ON) and a track under it is full when
+ *  ON; a number or a word sits under the pictogram, a % with its track too; unknown: a dash, or a
+ *  dimmed pictogram for an ON / OFF field. */
+export function comboKey(label: string, icon: Icon, field: Field | undefined, value: Value | undefined, detail = ""): string {
+	const v = shown(field, value);
+	const flag = flagOf(value);
+	const known = value !== null && value !== undefined;
+	const onOff = flag !== null || (!known && (field?.type === "bool" || field?.id === "engines"));
+	const colour = flag !== null ? (flag ? MINT : INK) : onOff ? INK_OFF : known ? v.colour : INK;
+	const track = flag !== null ? (flag ? 1 : 0) : fillOf(field, value);
+	const words = v.unit !== "" ? `${v.big} ${v.unit}` : v.big;
+	const state = !onOff ? text(72, 92, numberSize(words, 24, 120), known ? v.colour : INK_DIM, words, { num: true }) : "";
+	const bar = track !== null
+		? `<rect x="16" y="128" width="112" height="6" ${fill(INK_TRACK)}/>`
+			+ (track > 0 ? `<rect x="16" y="128" width="${Math.round(112 * track)}" height="6" ${fill(flag !== null ? MINT : v.colour)}/>` : "")
+		: "";
+	// A chosen value ("set": convergence = 800 m) replaces the label: the pictogram already says what.
+	const lines = detail !== "" ? [`→ ${detail}`] : wrap(caption(label), 15, onOff ? 2 : 1);
+	return svg(ground() + glyph(icon.symbol, icon.fill, 44, 12, 56, colour) + state
+		+ block(lines, onOff ? 98 : 116, 12, 15, INK_DIM) + bar);
+}
+
 /** A key of the profiles drawn once (a folder, Back, Next): its pictogram, room below for the
  *  software's title, and for a folder the accent ››› of the game's panel titles, drawn as strokes
  *  (no text: the same picture on every machine, whatever its fonts). */

@@ -9,6 +9,7 @@ import type { JsonObject, JsonValue } from "@elgato/utils";
 
 import { GameLink, type LinkStatus } from "./game-link.js";
 import { commandsByTab, labelOf, type Schema } from "./schema.js";
+import { STATE_OF } from "./states.js";
 
 type GlobalSettings = { token?: string };
 
@@ -95,6 +96,9 @@ export async function sendInspector(kind: "command" | "value", settings: JsonObj
 		statusText: statusText(link.status),
 		language: language(),
 		choices: link.schema ? choices(kind, link.schema) : [],
+		// A command key may show a state (combined keys): the fields, and the default of each command.
+		fields: kind === "command" && link.schema ? choices("value", link.schema) : [],
+		states: kind === "command" ? STATE_OF : {},
 		settings,
 	});
 }
