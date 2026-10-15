@@ -51,7 +51,7 @@ export function commandsByTab(schema: Schema): Map<string, Command[]> {
 		out.set(tab.id, []);
 	}
 	for (const command of schema.commands) {
-		if (command.kind === "hold") {
+		if (command.kind === "hold" || command.deprecated) {
 			continue;
 		}
 		const list = out.get(command.tab) ?? [];

@@ -12,6 +12,8 @@
 	"Localization": {
 		"game_off": "Jeu fermé",
 		"unpaired": "Jeu ouvert, non appairé : tapez le code affiché par le jeu",
+		"outdated": "Mettez à jour le companion Farline : le jeu parle une version plus récente",
+		"outdated_short": "Mettre à jour",
 		"pair_short": "Appairer",
 		"paired": "Appairé"
 	}

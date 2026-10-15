@@ -23,7 +23,8 @@ const RETRY_FIRST_MS = 2000;
 const RETRY_LATER_MS = 5000;
 const RETRY_FIRST_TRIES = 3;
 
-export type LinkStatus = "off" | "connecting" | "unpaired" | "paired";
+/** "outdated": the game speaks another companion protocol (cv): the plugin needs an update. */
+export type LinkStatus = "off" | "connecting" | "unpaired" | "paired" | "outdated";
 
 export type LinkOptions = {
 	name: string;
@@ -49,6 +50,8 @@ export class GameLink extends EventEmitter {
 	private tries = 0;
 	private stopped = false;
 	private sentAt: number[] = [];
+	/** auth sent, its answer not yet in: a welcome paired:false (the answer to hello) is not final. */
+	private authPending = false;
 	private readonly port: number;
 	private readonly retry: [number, number];
 
@@ -111,7 +114,8 @@ export class GameLink extends EventEmitter {
 		socket.on("open", () => {
 			this.tries = 0;
 			this.send({ t: "hello", cv: CV, name: this.name });
-			if (this.token !== "") {
+			this.authPending = this.token !== "";
+			if (this.authPending) {
 				this.send({ t: "auth", token: this.token });
 			}
 		});
@@ -145,6 +149,10 @@ export class GameLink extends EventEmitter {
 		switch (message.t) {
 			case "welcome":
 				this.game = String(message.game ?? "");
+				if (message.cv !== CV) {
+					this.setStatus("outdated");
+					break;
+				}
 				this.welcome(message.paired === true);
 				break;
 			case "paired":
@@ -166,9 +174,12 @@ export class GameLink extends EventEmitter {
 
 	private welcome(paired: boolean): void {
 		if (!paired) {
-			this.setStatus("unpaired");
+			if (!this.authPending) {
+				this.setStatus("unpaired");
+			}
 			return;
 		}
+		this.authPending = false;
 		const first = this.status !== "paired";
 		this.setStatus("paired");
 		if (first) {
@@ -177,7 +188,7 @@ export class GameLink extends EventEmitter {
 	}
 
 	private takeSchema(message: Record<string, unknown>): void {
-		if (isSchema(message)) {
+		if (isSchema(message) && message.cv === CV) {
 			this.schema = message;
 			this.emit("schema", message);
 		}
@@ -200,6 +211,7 @@ export class GameLink extends EventEmitter {
 
 	private refused(id: string, why: string): void {
 		if (id === "auth" && why === "unpaired") {
+			this.authPending = false;
 			const dead = this.token;
 			this.token = "";
 			this.setStatus("unpaired");

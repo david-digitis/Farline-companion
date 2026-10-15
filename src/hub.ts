@@ -41,6 +41,11 @@ export async function startLink(): Promise<void> {
 		void refreshInspector();
 	});
 	link.on("schema", () => void refreshInspector());
+	link.on("refused", (refusal: { id: string; why: string }) => {
+		if (refusal.id === "pair") {
+			void streamDeck.ui.sendToPropertyInspector({ t: "pair", ok: false, why: refusal.why });
+		}
+	});
 	link.start();
 }
 
@@ -51,6 +56,8 @@ export function statusText(status: LinkStatus): string {
 			return `${t("paired")} (Farline ${link.game})`;
 		case "unpaired":
 			return t("unpaired");
+		case "outdated":
+			return t("outdated");
 	}
 	return t("game_off");
 }
@@ -95,7 +102,9 @@ export async function sendInspector(kind: "command" | "value", settings: JsonObj
 /** A message from a Property Inspector that is about the pairing, not the key. True if handled. */
 export function pairingMessage(payload: JsonObject): boolean {
 	if (payload.t === "pair" && typeof payload.code === "string") {
-		link.pair(payload.code);
+		if (!link.pair(payload.code)) {
+			void streamDeck.ui.sendToPropertyInspector({ t: "pair", ok: false, why: "off" });
+		}
 		return true;
 	}
 	if (payload.t === "forget") {

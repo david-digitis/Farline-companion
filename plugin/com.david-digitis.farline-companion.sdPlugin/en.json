@@ -12,6 +12,8 @@
 	"Localization": {
 		"game_off": "Game off",
 		"unpaired": "Game running, not paired: type the code the game shows",
+		"outdated": "Update the Farline companion: the game speaks a newer version",
+		"outdated_short": "Update",
 		"pair_short": "Pair",
 		"paired": "Paired"
 	}
