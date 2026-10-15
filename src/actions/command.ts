@@ -27,6 +27,8 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 	private readonly flashing = new Set<string>();
 	/** key id -> the field it shows, so a state message redraws only the keys it touches. */
 	private readonly shows = new Map<string, string>();
+	/** key id -> its settings at the last redraw: a state message redraws without asking the software. */
+	private readonly settingsOf = new Map<string, CommandSettings>();
 
 	constructor() {
 		super();
@@ -45,6 +47,7 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 	override onWillDisappear(ev: WillDisappearEvent<CommandSettings>): void {
 		this.painter.forget(ev.action.id);
 		this.shows.delete(ev.action.id);
+		this.settingsOf.delete(ev.action.id);
 	}
 
 	override async onKeyDown(ev: KeyDownEvent<CommandSettings>): Promise<void> {
@@ -91,6 +94,11 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 	}
 
 	private redraw(key: KeyAction<CommandSettings>, settings: CommandSettings): void {
+		const id = settings.id ?? "";
+		const icon = commandIcon(id);
+		const show = icon !== null ? shownField(id, settings.show) : "";   // no pictogram: no combined key
+		this.settingsOf.set(key.id, settings);
+		this.shows.set(key.id, show);
 		if (this.flashing.has(key.id)) {
 			return;
 		}
@@ -98,14 +106,10 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : link.status === "outdated" ? t("outdated_short") : t("game_off"), NAV_ICONS.idle));
 			return;
 		}
-		const id = settings.id ?? "";
 		const command = findCommand(link.schema, id);
 		const label = command ? labelOf(command, language()) : (id === "" ? "?" : id);
 		const detail = command?.kind === "set" ? `${settings.value ?? ""} m` : "";
-		const icon = commandIcon(id);
-		const show = shownField(id, settings.show);
 		const field = show !== "" ? findField(link.schema, show) : undefined;
-		this.shows.set(key.id, field ? show : "");
 		this.painter.paint(key, icon !== null && field
 			? comboKey(label, icon, field, link.state.get(show), detail)
 			: commandKey(label, icon, detail));
@@ -113,8 +117,9 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 
 	private changed(changes: Record<string, Value>): void {
 		for (const key of this.actions) {
-			if (key.isKey() && !this.flashing.has(key.id) && (this.shows.get(key.id) ?? "") in changes) {
-				void key.getSettings().then((settings) => this.redraw(key, settings));
+			const settings = this.settingsOf.get(key.id);
+			if (key.isKey() && settings && !this.flashing.has(key.id) && (this.shows.get(key.id) ?? "") in changes) {
+				this.redraw(key, settings);
 			}
 		}
 	}

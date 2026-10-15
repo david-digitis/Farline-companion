@@ -46,6 +46,6 @@ test("the state a command shows by default is a field of the schema, and its com
 	for (const [command, field] of Object.entries(STATE_OF)) {
 		assert.ok(commands.has(command), `${command} is not a command of the schema`);
 		assert.ok(fields.has(field), `${command} shows ${field}, not a field of the schema`);
-		assert.ok(command in COMMAND_ICONS, `${command} has no pictogram to light up`);
+		assert.ok(command in COMMAND_ICONS && !LABEL_ONLY.has(command), `${command} has no pictogram to light up`);
 	}
 });

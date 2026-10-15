@@ -154,6 +154,9 @@ export function commandKey(label: string, icon: Icon | null = null, detail = "")
 		+ block(lines, lines.length > 1 ? 112 : 116, 12, 15, INK_DIM));
 }
 
+/** The word fields whose values are "on" / "off" (and between): drawn as ON / OFF keys. */
+export const ON_OFF_WORDS = new Set(["engines"]);
+
 /** A state as a flag: true / false for a bool or an "on" / "off" word, null otherwise. */
 export function flagOf(value: Value | undefined): boolean | null {
 	if (typeof value === "boolean") {
@@ -170,7 +173,7 @@ export function comboKey(label: string, icon: Icon, field: Field | undefined, va
 	const v = shown(field, value);
 	const flag = flagOf(value);
 	const known = value !== null && value !== undefined;
-	const onOff = flag !== null || (!known && (field?.type === "bool" || field?.id === "engines"));
+	const onOff = flag !== null || (!known && (field?.type === "bool" || ON_OFF_WORDS.has(field?.id ?? "")));
 	const colour = flag !== null ? (flag ? MINT : INK) : onOff ? INK_OFF : known ? v.colour : INK;
 	const track = flag !== null ? (flag ? 1 : 0) : fillOf(field, value);
 	const words = v.unit !== "" ? `${v.big} ${v.unit}` : v.big;
