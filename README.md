@@ -27,6 +27,10 @@ The master profile has one folder per tab of the game's Controls page. Copy the 
 your own profile: they keep working when the game changes, because each key asks the game for its
 labels at every connection.
 
+A command key also shows the state it changes (the landing gear lights up when it is down, the
+convergence notches show the distance): one key presses and tells. Its **Show** setting picks
+another value, or nothing.
+
 Once the companion is released, the **Guides** page of the game has the details.
 
 ---
@@ -58,5 +62,9 @@ sont ceux du jeu, Material Symbols Sharp (Apache 2.0, voir [CREDITS.md](CREDITS.
 Le profil maître a un dossier par onglet de la page Commandes du jeu. Copiez les touches qui vous
 plaisent dans votre propre profil : elles restent justes quand le jeu évolue, car chaque touche
 demande ses libellés au jeu à chaque connexion.
+
+Une touche de commande montre aussi l'état qu'elle change (le train s'allume quand il est sorti,
+les crans de convergence montrent la distance) : une seule touche appuie et renseigne. Son réglage
+**Afficher** choisit une autre valeur, ou rien.
 
 Une fois le companion publié, la page **Guides** du jeu donne le détail.

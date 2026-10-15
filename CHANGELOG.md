@@ -12,3 +12,7 @@
 - One pictogram per command, field and tab of the schema (`src/icons.ts`, two commands keep their
   label alone), shipped by `npm run symbols`; folders, Back and Next of the profiles in the same style.
 - `npm run board`: every state of a key on one PNG, to look at the style in service.
+- Combined keys: a command key shows the state it changes (`src/states.ts`), its pictogram and
+  track lit when ON (chosen on a board of four, « la 3 »); **Show** in the Property Inspector picks
+  another field or none. The profiles drop their command + value pairs: one key each.
+- `npm run pack` stamps a version that rises at each build, so a double-click replaces the plugin.
