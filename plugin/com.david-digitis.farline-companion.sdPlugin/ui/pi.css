@@ -1,11 +1,14 @@
-/* The game's colours (palette.ts): dark screen, ink, mint = good, coral = trouble. */
-body { background: #2d2d2d; color: #ece8e1; font: 12px "Segoe UI", sans-serif; margin: 8px 12px; }
+/* The game's Tactical tokens (palette.ts): the dark screen, ink, mint = good, coral = trouble,
+   1 px strokes, no rounded corner, no glow, no gradient, no shadow. */
+body { background: #0f1419; color: #ece8e1; font: 12px "DM Mono", Consolas, "Segoe UI", monospace; margin: 8px 12px; }
 .row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
-.label { width: 96px; flex: none; color: #ece8e199; }
-select, input { flex: 1; background: #3d3d3d; color: #ece8e1; border: 1px solid #555; padding: 3px; }
+.label { width: 96px; flex: none; color: #ece8e199; text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; }
+select, input { flex: 1; background: #0f1419; color: #ece8e1; border: 1px solid #ece8e129; border-radius: 0; padding: 3px; font: inherit; }
+select:focus, input:focus { outline: none; border-color: #3ee6b4; }
 #code { letter-spacing: 3px; max-width: 80px; }
-button { background: #3d3d3d; color: #ece8e1; border: 1px solid #3ee6b4; padding: 3px 10px; cursor: pointer; }
-button.quiet { border-color: #555; }
+button { background: #3ee6b4; color: #0f1419; border: 1px solid #3ee6b4; border-radius: 0; padding: 3px 10px; cursor: pointer;
+	font: 700 12px "Chakra Petch", Bahnschrift, "Segoe UI", sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
+button.quiet { background: transparent; color: #ece8e1; border-color: #ece8e166; }
 .hint { color: #ece8e199; margin: 2px 0 8px 104px; }
 .status.paired { color: #3ee6b4; }
 .hint.error { color: #ff5e5b; }

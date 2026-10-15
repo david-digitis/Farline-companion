@@ -8,14 +8,24 @@
 // show), five a page, the sixth key "Next" opening the rest. A tab's page: Back at (0,0), then its
 // keys, paginated the same way. Composed blocks open their tab: a pair on the top row, a triple on
 // the bottom row (convergence - / value / +). Format: Stream Deck 7 profiles (Version 3.0, read
-// from profiles the software exported); see PROTOCOL.md for the actions.
+// from profiles the software exported); see PROTOCOL.md for the actions. Folders, Back and Next
+// carry a picture in the keys' style (a pictogram, no text: the software writes the title), in the
+// page's Images/ as the software stores them. Needs `tsc` first (it draws with build/render.js).
 
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { Resvg } from "@resvg/resvg-js";
+
+import { NAV_ICONS, TAB_ICONS } from "../build/icons.js";
+import { navKey } from "../build/render.js";
+import { useSymbols } from "../build/symbols.js";
 import { writeZip } from "./zip.mjs";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+useSymbols(path.join(ROOT, "plugin", "com.david-digitis.farline-companion.sdPlugin", "imgs", "symbols"));
 
 export const PLUGIN = "com.david-digitis.farline-companion";
 export const COMMAND = `${PLUGIN}.command`;
@@ -56,14 +66,28 @@ function label(item, lang) {
 	return lang === "fr" ? item.label_fr : item.label_en;
 }
 
-function state(title) {
-	return { FontSize: 11, ShowTitle: title !== "", Title: title, TitleAlignment: "bottom", TitleColor: "#ece8e1" };
+function state(title, image) {
+	const out = { FontSize: 11, ShowTitle: title !== "", Title: title, TitleAlignment: "bottom", TitleColor: "#ece8e1" };
+	return image ? { ...out, Image: `Images/${image.name}` } : out;
 }
 
+/** A picture of the profile: a pictogram drawn as the plugin draws a key, 144 px, named from what it shows. */
+export function pictureOf(icon, folder = false) {
+	const h = crypto.createHash("sha1").update(`${icon.symbol}/${icon.fill}/${folder}`).digest("hex").toUpperCase();
+	const data = new Resvg(navKey(icon, folder), { fitTo: { mode: "width", value: 144 }, font: { loadSystemFonts: false } }).render().asPng();
+	return { name: `${h.slice(0, 25)}Z.png`, data };
+}
+
+/** The picture data of a key, kept out of its JSON. */
+const PICTURES = new WeakMap();
+
 /** A key; `where` (its page and slot) makes its ActionID unique in the profile. */
-function key(where, name, uuid, settings, title = "", plugin = PLUGIN_INFO) {
+function key(where, name, uuid, settings, title = "", plugin = PLUGIN_INFO, image = null) {
 	const out = { ActionID: uuidOf(`${where}/${name}/${JSON.stringify(settings)}`), LinkedTitle: true, Name: name,
-		Resources: null, Settings: settings, State: 0, States: [state(title)], UUID: uuid };
+		Resources: null, Settings: settings, State: 0, States: [state(title, image)], UUID: uuid };
+	if (image) {
+		PICTURES.set(out, image.data);
+	}
 	if (plugin) {
 		out.Plugin = plugin;
 	}
@@ -152,14 +176,14 @@ function chain(name, pages, toKeys, root, files, dials, lang) {
 	pages.forEach((page, i) => {
 		const actions = {};
 		if (!root || i > 0) {
-			actions["0,0"] = key(`${ids[i]}/0,0`, "Parent Folder", BACK, {}, "", null);
+			actions["0,0"] = key(`${ids[i]}/0,0`, "Parent Folder", BACK, {}, "", null, pictureOf(NAV_ICONS.back));
 		}
 		Object.assign(actions, toKeys(page.slots, ids[i]));
 		if (page.more) {
-			actions[page.next] = key(`${ids[i]}/${page.next}`, "Create Folder", OPEN, { ProfileUUID: ids[i + 1] }, lang === "fr" ? "Suite ▸" : "Next ▸",
-				{ Name: "Create Folder", UUID: OPEN, Version: "1.0" });
+			actions[page.next] = key(`${ids[i]}/${page.next}`, "Create Folder", OPEN, { ProfileUUID: ids[i + 1] }, lang === "fr" ? "Suite" : "Next",
+				{ Name: "Create Folder", UUID: OPEN, Version: "1.0" }, pictureOf(NAV_ICONS.next));
 		}
-		files.push({ id: ids[i], manifest: { Controllers: controllers(actions, dials), Icon: "", Name: "" } });
+		files.push({ id: ids[i], manifest: { Controllers: controllers(actions, dials), Icon: "", Name: "" }, images: imagesOf(actions) });
 	});
 	return ids[0];
 }
@@ -171,14 +195,26 @@ export function pagesOf(schema, lang, dials) {
 	const folders = tabs.map((t) => {
 		const pages = paginate(unitsOf(t.id, schema));
 		const first = chain(`tab/${t.id}/${lang}/${dials}`, pages, slotKeys, false, files, dials, lang);
-		return [{ folder: label(t, lang), page: first }];
+		return [{ folder: label(t, lang), page: first, icon: TAB_ICONS[t.id] ?? null }];
 	});
 	const rootPages = paginate(folders, true);
 	const root = chain(`root/${lang}/${dials}`, rootPages, (slots, page) => Object.fromEntries(Object.entries(slots).map(
 		([at, f]) => [at, key(`${page}/${at}`, "Create Folder", OPEN, { ProfileUUID: f.page }, f.folder,
-			{ Name: "Create Folder", UUID: OPEN, Version: "1.0" })])), true, files, dials, lang);
+			{ Name: "Create Folder", UUID: OPEN, Version: "1.0" }, f.icon ? pictureOf(f.icon, true) : null)])), true, files, dials, lang);
 	files.sort((a, b) => (a.id === root ? -1 : b.id === root ? 1 : 0));
 	return files;
+}
+
+/** The pictures a page's keys name, once each, in a stable order. */
+function imagesOf(actions) {
+	const out = new Map();
+	for (const a of Object.values(actions)) {
+		const image = a.States[0].Image;
+		if (image && !out.has(image)) {
+			out.set(image, PICTURES.get(a));
+		}
+	}
+	return [...out.entries()].sort(([a], [b]) => a.localeCompare(b));
 }
 
 function slotKeys(slots, page) {
@@ -202,7 +238,9 @@ export function profileOf(schema, model, lang) {
 	];
 	for (const page of [...pages, { id: empty, manifest: { Controllers: controllers(null, model.dials), Icon: "", Name: "" } }]) {
 		const dir = `${base}Profiles/${page.id.toUpperCase()}/`;
-		entries.push({ name: dir }, { name: `${dir}Images/` }, { name: `${dir}manifest.json`, data: json(page.manifest) });
+		entries.push({ name: dir }, { name: `${dir}Images/` },
+			...(page.images ?? []).map(([name, data]) => ({ name: `${dir}${name}`, data })),
+			{ name: `${dir}manifest.json`, data: json(page.manifest) });
 	}
 	const suffix = lang === "fr" ? "-FR" : "";
 	return { name: `Farline-${model.name}${suffix}.streamDeckProfile`, buffer: writeZip(entries) };
