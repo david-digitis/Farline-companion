@@ -12,9 +12,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "tsc -p tsconfig.json && node --test tests/*.test.mjs",
-    "profiles": "node tools/make-profiles.mjs schema.json",
+    "profiles": "tsc -p tsconfig.json && node tools/make-profiles.mjs schema.json",
     "pack": "streamdeck pack plugin/com.david-digitis.farline-companion.sdPlugin --output dist --force",
-    "validate": "streamdeck validate plugin/com.david-digitis.farline-companion.sdPlugin"
+    "validate": "streamdeck validate plugin/com.david-digitis.farline-companion.sdPlugin",
+    "symbols": "tsc -p tsconfig.json && node tools/sync-symbols.mjs",
+    "board": "tsc -p tsconfig.json && node tools/make-board.mjs"
   },
   "dependencies": {
     "@elgato/streamdeck": "3.0.1",
@@ -24,6 +26,8 @@
   "devDependencies": {
     "@elgato/cli": "1.10.1",
     "@eslint/js": "10.0.1",
+    "@material-symbols/svg-400": "0.48.0",
+    "@resvg/resvg-js": "2.6.2",
     "@rollup/plugin-commonjs": "28.0.8",
     "@rollup/plugin-node-resolve": "16.0.3",
     "@rollup/plugin-typescript": "12.1.4",
