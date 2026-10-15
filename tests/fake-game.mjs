@@ -16,6 +16,7 @@ export class FakeGame {
 		this.headers = [];   // the request headers of every connection
 		this.received = [];   // every message, parsed
 		this.clients = new Set();
+		this.cv = 1;   // a test sets 2: a game that speaks a newer protocol
 	}
 
 	start() {
@@ -63,7 +64,7 @@ export class FakeGame {
 		this.received.push(message);
 		switch (message.t) {
 			case "hello":
-				return this.send(client, { t: "welcome", cv: 1, paired: client.paired, game: "0.67.0" });
+				return this.send(client, { t: "welcome", cv: this.cv, paired: client.paired, game: "0.67.0" });
 			case "pair":
 				return this.pair(client, message);
 			case "auth":
@@ -71,7 +72,7 @@ export class FakeGame {
 					return this.send(client, { t: "refused", id: "auth", why: "unpaired" });
 				}
 				client.paired = true;
-				return this.send(client, { t: "welcome", cv: 1, paired: true, game: "0.67.0" });
+				return this.send(client, { t: "welcome", cv: this.cv, paired: true, game: "0.67.0" });
 			case "schema":
 				return this.send(client, client.paired ? { t: "schema", ...this.schema, game: "0.67.0" }
 					: { t: "refused", id: "schema", why: "unpaired" });

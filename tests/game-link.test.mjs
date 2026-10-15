@@ -86,6 +86,31 @@ test("a known token authenticates; a refused command says why; the rate stays un
 	link.stop();
 });
 
+test("with a valid token, the link never shows unpaired on its way to paired", async () => {
+	const link = newLink([...game.tokens][0]);
+	const seen = [];
+	link.on("status", (s) => seen.push(s));
+	link.start();
+	await until(() => link.status === "paired");
+	assert.deepEqual(seen, ["connecting", "paired"]);
+	link.stop();
+});
+
+test("a game that speaks another protocol version: outdated, nothing is sent", async () => {
+	game.cv = 2;
+	const link = newLink([...game.tokens][0]);
+	try {
+		link.start();
+		await until(() => link.status === "outdated");
+		await new Promise((r) => setTimeout(r, 200));   // the answer to auth must not turn it back to paired
+		assert.equal(link.status, "outdated");
+		assert.equal(link.command("view_toggle"), false);
+	} finally {
+		link.stop();
+		game.cv = 1;
+	}
+});
+
 test("the game goes away and comes back: the link reconnects and authenticates again", async () => {
 	const token = [...game.tokens][0];
 	const link = newLink(token);

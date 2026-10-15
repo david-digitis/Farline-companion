@@ -14,7 +14,7 @@ const manifest = JSON.parse(fs.readFileSync(
 	new URL("../plugin/com.david-digitis.farline-companion.sdPlugin/manifest.json", import.meta.url), "utf8"));
 const OPEN = "com.elgato.streamdeck.profile.openchild";
 const BACK = "com.elgato.streamdeck.profile.backtoparent";
-const commandIds = new Set(schema.commands.filter((c) => c.kind !== "hold").map((c) => c.id));
+const commandIds = new Set(schema.commands.filter((c) => c.kind === "press" || c.kind === "delta").map((c) => c.id));
 const fieldIds = new Set(schema.fields.map((f) => f.id));
 
 function pagesOf(files) {
@@ -89,6 +89,16 @@ test("Combat opens on the convergence block, side by side on the bottom row", ()
 	assert.deepEqual([pages[0].slots["0,1"], pages[0].slots["1,1"], pages[0].slots["2,1"]],
 		[{ c: "convergence_down" }, { v: "convergence" }, { c: "convergence_up" }]);
 	assert.equal(pages[0].next, "2,0");
+});
+
+test("every key of a profile has its own ActionID", () => {
+	const { pages } = pagesOf(readZip(profileOf(schema, MODELS[0], "en").buffer));
+	const ids = Object.values(pages).flatMap((p) => Object.values(p.Controllers[0].Actions ?? {}).map((k) => k.ActionID));
+	assert.equal(new Set(ids).size, ids.length);
+});
+
+test("a block too long for a row fails loudly instead of looping", () => {
+	assert.throws(() => paginate([[{ c: "a" }, { c: "b" }, { c: "c" }, { c: "d" }]]), /fits no row/);
 });
 
 test("the same schema gives the same bytes", () => {

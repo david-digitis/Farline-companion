@@ -21,6 +21,13 @@ test("a number: large, in its accent, with its unit", () => {
 	assert.match(svg, />Speed</);
 });
 
+test("numbers are rounded by unit, long words are cut", () => {
+	assert.equal(shown(g, 4.237891).big, "4.2");
+	assert.equal(shown(speed, 141.7).big, "142");
+	assert.equal(shown({ id: "x", type: "number", unit: "", label_en: "", label_fr: "" }, 1 / 3).big, "0.33");
+	assert.equal(shown({ id: "target", type: "string", unit: "", label_en: "", label_fr: "" }, "Pirate interceptor").big, "PIRATE IN…");
+});
+
 test("a flag: ON in mint, OFF in ink", () => {
 	assert.deepEqual(shown(gear, true), { big: "ON", unit: "", colour: MINT });
 	assert.deepEqual(shown(gear, false), { big: "OFF", unit: "", colour: INK });
