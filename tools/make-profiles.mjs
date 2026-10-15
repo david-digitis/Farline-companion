@@ -44,13 +44,13 @@ export const MODELS = [
 	{ name: "Neo", model: "20GBJ9901", dials: false },
 ];
 
-/** Blocks that open a tab: [command | value] keys side by side. */
+/** Blocks that open a tab: [command | value] keys side by side. A command key shows its own state
+ *  (combined keys, src/states.ts): the gear, the engines, the lights, the view need one key each,
+ *  and both convergence notches show the distance. */
 export const BLOCKS = {
-	"Combat": [[{ c: "convergence_down" }, { v: "convergence" }, { c: "convergence_up" }]],
-	"Ship commands": [[{ c: "landing_gear" }, { v: "gear" }], [{ c: "engine_toggle" }, { v: "engines" }],
-		[{ c: "headlights" }, { v: "headlights" }]],
+	"Combat": [[{ c: "convergence_down" }, { c: "convergence_up" }]],
+	"Ship commands": [[{ c: "landing_gear" }], [{ c: "engine_toggle" }], [{ c: "headlights" }]],
 	"Flight controls": [[{ v: "speed" }, { v: "throttle" }, { v: "g" }]],
-	"General": [[{ c: "view_toggle" }, { v: "view_cockpit" }]],
 };
 const TOP = ["1,0", "2,0"];
 const BOTTOM = ["0,1", "1,1", "2,1"];

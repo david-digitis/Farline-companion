@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { Resvg } from "@resvg/resvg-js";
 
 import { commandIcon, fieldIcon, NAV_ICONS, TAB_ICONS } from "../build/icons.js";
-import { commandKey, idleKey, navKey, refusedKey, valueKey } from "../build/render.js";
+import { comboKey, commandKey, idleKey, navKey, refusedKey, valueKey } from "../build/render.js";
 import { useSymbols } from "../build/symbols.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -39,6 +39,14 @@ const ROWS = [
 		["Next", navKey(NAV_ICONS.next)],
 		["Refused", refusedKey("Landing gear down / up", "menu", commandIcon("landing_gear"))],
 		["Game off", idleKey("Game off", NAV_ICONS.idle)],
+	],
+	[
+		["Combined ON", comboKey("Landing gear down / up", commandIcon("landing_gear"), gear, true)],
+		["Combined OFF", comboKey("Landing gear down / up", commandIcon("landing_gear"), gear, false)],
+		["Notch + metres", comboKey("Convergence farther (one notch)", commandIcon("convergence_up"), convergence, 500)],
+		["Set 800 m", comboKey("Convergence distance", commandIcon("convergence"), convergence, 500, "800 m")],
+		["Energy %", comboKey("Energy to shield", commandIcon("tri_shield"), shield, 40)],
+		["Unknown", comboKey("Landing gear down / up", commandIcon("landing_gear"), gear, null)],
 	],
 ];
 
