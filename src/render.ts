@@ -53,6 +53,23 @@ export function wrap(label: string, width = 11, lines = 3): string[] {
 	return out.map((l) => (l.length > width ? `${l.slice(0, width - 1)}…` : l));
 }
 
+const MAX_TEXT = 10;
+
+/** A number as a key shows it: whole for %, m, m/s, mm; one decimal for g and s; two at most otherwise. */
+export function numberText(value: number, unit: string): string {
+	if (["%", "m", "m/s", "mm"].includes(unit)) {
+		return String(Math.round(value));
+	}
+	if (unit === "g" || unit === "s") {
+		return value.toFixed(1);
+	}
+	return String(Math.round(value * 100) / 100);
+}
+
+function capped(text: string): string {
+	return text.length > MAX_TEXT ? `${text.slice(0, MAX_TEXT - 1)}…` : text;
+}
+
 /** The shown form of a value: "142 m/s", "ON", "—". */
 export function shown(field: Field | undefined, value: Value | undefined): { big: string; unit: string; colour: string } {
 	const id = field?.id ?? "";
@@ -63,9 +80,9 @@ export function shown(field: Field | undefined, value: Value | undefined): { big
 		return { big: value ? "ON" : "OFF", unit: "", colour: value ? MINT : INK };
 	}
 	if (typeof value === "number") {
-		return { big: String(value), unit: field?.unit ?? "", colour: accentOf(id) };
+		return { big: capped(numberText(value, field?.unit ?? "")), unit: field?.unit ?? "", colour: accentOf(id) };
 	}
-	return { big: value.toUpperCase(), unit: "", colour: accentOf(id) };
+	return { big: capped(value.toUpperCase()), unit: "", colour: accentOf(id) };
 }
 
 /** A value key: the value large, its unit, the label small above. */

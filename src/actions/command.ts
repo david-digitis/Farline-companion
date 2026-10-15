@@ -85,7 +85,7 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 			return;
 		}
 		if (link.status !== "paired") {
-			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : t("game_off")));
+			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : link.status === "outdated" ? t("outdated_short") : t("game_off")));
 			return;
 		}
 		const command = findCommand(link.schema, settings.id ?? "");
@@ -107,7 +107,10 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 				this.flashing.add(key.id);
 				setTimeout(() => {
 					this.flashing.delete(key.id);
-					this.redraw(key, settings);
+					const still = [...this.actions].find((a) => a.id === key.id);
+					if (still?.isKey()) {
+						void still.getSettings().then((now) => this.redraw(still, now));   // rebound meanwhile: its new face
+					}
 				}, REFUSED_MS);
 			});
 		}

@@ -75,7 +75,7 @@ export class ValueAction extends SingletonAction<ValueSettings> {
 	private redraw(key: KeyAction<ValueSettings>): void {
 		const id = this.fields.get(key.id) ?? "";
 		if (link.status !== "paired") {
-			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : t("game_off")));
+			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : link.status === "outdated" ? t("outdated_short") : t("game_off")));
 			return;
 		}
 		const field = findField(link.schema, id);
