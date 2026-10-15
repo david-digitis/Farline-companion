@@ -6,10 +6,11 @@ A Stream Deck plugin and master profiles for **Farline**. Your keys press the ga
 show what its HUD shows (speed, convergence, landing gear, energy...), over a connection between the
 game and the Stream Deck software **on your own PC**. Nothing leaves your PC. The pictograms are the
 game's own, Material Symbols Sharp (Apache 2.0, see [CREDITS.md](CREDITS.md)).
+The plugin and the profiles are under the MIT licence ([LICENSE](LICENSE)).
 
 ## Install
 
-1. Download `com.david-digitis.farline-companion.streamDeckPlugin` and double-click it: the Stream
+1. Download `com.david-digitis.farline-companion.streamDeckPlugin` from the [latest release](https://github.com/david-digitis/Farline-companion/releases/latest) and double-click it: the Stream
    Deck software installs the **Farline** actions.
 2. Download the master profile for your device (`Farline-Mini`, `Farline-Classic`, `Farline-XL`,
    `Farline-Plus`, `Farline-Neo`; `-FR` for French folder names) and double-click it.
@@ -41,10 +42,11 @@ Un plugin Stream Deck et des profils maîtres pour **Farline**. Vos touches appu
 du jeu et affichent ce que montre son HUD (vitesse, convergence, train, énergie...), par une connexion
 entre le jeu et le logiciel Stream Deck **sur votre propre PC**. Rien ne sort de votre PC. Les pictos
 sont ceux du jeu, Material Symbols Sharp (Apache 2.0, voir [CREDITS.md](CREDITS.md)).
+Le plugin et les profils sont sous licence MIT ([LICENSE](LICENSE)).
 
 ### Installer
 
-1. Téléchargez `com.david-digitis.farline-companion.streamDeckPlugin` et double-cliquez dessus : le
+1. Téléchargez `com.david-digitis.farline-companion.streamDeckPlugin` dans la [dernière release](https://github.com/david-digitis/Farline-companion/releases/latest) et double-cliquez dessus : le
    logiciel Stream Deck installe les actions **Farline**.
 2. Téléchargez le profil maître de votre appareil (`Farline-Mini`, `Farline-Classic`, `Farline-XL`,
    `Farline-Plus`, `Farline-Neo` ; `-FR` pour les noms de dossiers en français) et double-cliquez dessus.

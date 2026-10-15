@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Stream Deck plugin and master profiles for Farline: the game talks to your keys over a local WebSocket.",
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=20"

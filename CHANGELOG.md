@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 - unreleased
+## 0.1.0 - 2026-10-15
 
 - Stream Deck plugin with two generic actions: **Command** (presses one of the game's commands) and
   **Value** (shows one value the game pushes), pairing from the Property Inspector.
@@ -16,3 +16,4 @@
   track lit when ON (chosen on a board of four, « la 3 »); **Show** in the Property Inspector picks
   another field or none. The profiles drop their command + value pairs: one key each.
 - `npm run pack` stamps a version that rises at each build, so a double-click replaces the plugin.
+- MIT licence.
