@@ -72,10 +72,15 @@ function state(title, image) {
 }
 
 /** A picture of the profile: a pictogram drawn as the plugin draws a key, 144 px, named from what it shows. */
+const pictures = new Map();
+
 export function pictureOf(icon, folder = false) {
 	const h = crypto.createHash("sha1").update(`${icon.symbol}/${icon.fill}/${folder}`).digest("hex").toUpperCase();
-	const data = new Resvg(navKey(icon, folder), { fitTo: { mode: "width", value: 144 }, font: { loadSystemFonts: false } }).render().asPng();
-	return { name: `${h.slice(0, 25)}Z.png`, data };
+	if (!pictures.has(h)) {
+		const data = new Resvg(navKey(icon, folder), { fitTo: { mode: "width", value: 144 }, font: { loadSystemFonts: false } }).render().asPng();
+		pictures.set(h, { name: `${h.slice(0, 25)}Z.png`, data });
+	}
+	return pictures.get(h);
 }
 
 /** The picture data of a key, kept out of its JSON. */
