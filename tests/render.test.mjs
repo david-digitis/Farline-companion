@@ -7,7 +7,8 @@ import path from "node:path";
 
 import { NAV_ICONS, TAB_ICONS } from "../build/icons.js";
 import { BLUE, CORAL, INK, MINT } from "../build/palette.js";
-import { caption, commandKey, dataUri, fillOf, idleKey, navKey, refusedKey, shown, valueKey, wrap } from "../build/render.js";
+import { caption, comboKey, commandKey, dataUri, fillOf, flagOf, idleKey, navKey, refusedKey, shown, valueKey, wrap } from "../build/render.js";
+import { shownField } from "../build/states.js";
 import { useSymbols } from "../build/symbols.js";
 
 useSymbols(path.join("plugin", "com.david-digitis.farline-companion.sdPlugin", "imgs", "symbols"));
@@ -57,6 +58,10 @@ test("every state: no rounded corner, no gradient, no glow, no shadow", () => {
 		"game off": idleKey("Game off", NAV_ICONS.idle),
 		"folder": navKey(TAB_ICONS.Combat, true),
 		"back": navKey(NAV_ICONS.back),
+		"combined ON": comboKey("Landing gear down / up", gearIcon, gear, true),
+		"combined OFF": comboKey("Landing gear down / up", gearIcon, gear, false),
+		"combined metres": comboKey("Convergence farther", { symbol: "add", fill: false }, { id: "convergence", type: "number", unit: "m" }, 500),
+		"combined unknown": comboKey("Landing gear", gearIcon, gear, null),
 	};
 	for (const [name, svg] of Object.entries(states)) {
 		assert.doesNotMatch(svg, /rx=|ry=|Gradient|filter|blur|shadow|[^-]opacity|<image|<svg[^>]*>.*<svg/, name);
@@ -102,4 +107,30 @@ test("labels wrap at words, three lines at most, and text is escaped", () => {
 	assert.equal(wrap("one two three four five six seven eight").length, 3);
 	assert.match(commandKey("A <b> & c"), /A &lt;B&gt; &amp; C/);
 	assert.match(dataUri("<svg/>"), /^data:image\/svg\+xml;base64,/);
+});
+
+test("a combined key: the pictogram and the track light up when ON, the distance under the pictogram", () => {
+	const on = comboKey("Landing gear", gearIcon, gear, true);
+	assert.match(on, new RegExp(`fill="${MINT}" d=`));
+	assert.match(on, new RegExp(`width="112" height="6" fill="${MINT}"`));
+	const off = comboKey("Landing gear", gearIcon, gear, false);
+	assert.match(off, new RegExp(`fill="${INK}" d=`));
+	assert.doesNotMatch(off, new RegExp(`fill="${MINT}"`));
+	const conv = comboKey("Convergence farther", gearIcon, { id: "convergence", type: "number", unit: "m" }, 500);
+	assert.match(conv, />500 m</);
+	assert.doesNotMatch(conv, /height="6"/);
+	assert.match(comboKey("Gear", gearIcon, gear, null), new RegExp(`fill="#ece8e1" fill-opacity="0.38" d=`));
+	assert.match(comboKey("Range", gearIcon, { id: "convergence", type: "number", unit: "m" }, null), />—</);
+	assert.match(comboKey("Convergence distance", gearIcon, { id: "convergence", type: "number", unit: "m" }, 500, "800 m"), />→ 800 m</);
+});
+
+test("an engine word is a flag; the shown field: the player's choice, none, or the table", () => {
+	assert.equal(flagOf("on"), true);
+	assert.equal(flagOf("off"), false);
+	assert.equal(flagOf("starting"), null);
+	assert.equal(shownField("landing_gear", undefined), "gear");
+	assert.equal(shownField("landing_gear", ""), "gear");
+	assert.equal(shownField("landing_gear", "none"), "");
+	assert.equal(shownField("landing_gear", "speed"), "speed");
+	assert.equal(shownField("photo_capture", undefined), "");
 });

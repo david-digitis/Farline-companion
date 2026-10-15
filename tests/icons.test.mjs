@@ -38,3 +38,14 @@ test("every glyph of the table is shipped, and nothing else", () => {
 	assert.deepEqual([...wanted].filter((f) => !shipped.has(f)), [], "run npm run symbols");
 	assert.deepEqual([...shipped].filter((f) => !wanted.has(f)), [], "run npm run symbols");
 });
+
+test("the state a command shows by default is a field of the schema, and its command exists", async () => {
+	const { STATE_OF } = await import("../build/states.js");
+	const commands = new Set(schema.commands.map((c) => c.id));
+	const fields = new Set(schema.fields.map((f) => f.id));
+	for (const [command, field] of Object.entries(STATE_OF)) {
+		assert.ok(commands.has(command), `${command} is not a command of the schema`);
+		assert.ok(fields.has(field), `${command} shows ${field}, not a field of the schema`);
+		assert.ok(command in COMMAND_ICONS, `${command} has no pictogram to light up`);
+	}
+});

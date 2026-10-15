@@ -7,6 +7,7 @@ import fs from "node:fs";
 import { test } from "node:test";
 
 import { COMMAND, MODELS, paginate, PLUGIN, profileOf, unitsOf, VALUE } from "../tools/make-profiles.mjs";
+import { STATE_OF } from "../build/states.js";
 import { readZip } from "../tools/zip.mjs";
 
 const schema = JSON.parse(fs.readFileSync(new URL("../schema.json", import.meta.url), "utf8"));
@@ -90,11 +91,21 @@ test("every command a key may send is in some page of the profile", () => {
 	assert.deepEqual(missing, []);
 });
 
-test("Combat opens on the convergence block, side by side on the bottom row", () => {
+test("Combat opens on the convergence notches side by side, each showing the distance", () => {
 	const pages = paginate(unitsOf("Combat", schema));
-	assert.deepEqual([pages[0].slots["0,1"], pages[0].slots["1,1"], pages[0].slots["2,1"]],
-		[{ c: "convergence_down" }, { v: "convergence" }, { c: "convergence_up" }]);
-	assert.equal(pages[0].next, "2,0");
+	assert.deepEqual([pages[0].slots["1,0"], pages[0].slots["2,0"]], [{ c: "convergence_down" }, { c: "convergence_up" }]);
+	assert.equal(STATE_OF.convergence_down, "convergence");
+	assert.equal(STATE_OF.convergence_up, "convergence");
+});
+
+test("a combined command is not doubled by its value: no value key shows what a command of the page shows", () => {
+	for (const tab of schema.tabs) {
+		for (const page of paginate(unitsOf(tab.id, schema))) {
+			const keys = Object.values(page.slots);
+			const shown = new Set(keys.filter((k) => k.c !== undefined).map((k) => STATE_OF[k.c]));
+			assert.deepEqual(keys.filter((k) => k.v !== undefined && shown.has(k.v)), [], tab.id);
+		}
+	}
 });
 
 test("every key of a profile has its own ActionID", () => {
