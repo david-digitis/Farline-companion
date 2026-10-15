@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "test": "tsc -p tsconfig.json && node --test tests/*.test.mjs",
     "profiles": "tsc -p tsconfig.json && node tools/make-profiles.mjs schema.json",
-    "pack": "streamdeck pack plugin/com.david-digitis.farline-companion.sdPlugin --output dist --force",
+    "pack": "node tools/pack.mjs",
     "validate": "streamdeck validate plugin/com.david-digitis.farline-companion.sdPlugin",
     "symbols": "tsc -p tsconfig.json && node tools/sync-symbols.mjs",
     "board": "tsc -p tsconfig.json && node tools/make-board.mjs"
