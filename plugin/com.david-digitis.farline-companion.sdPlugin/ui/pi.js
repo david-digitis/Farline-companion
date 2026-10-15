@@ -109,6 +109,13 @@ function fillShow(message) {
 		}
 		list.appendChild(parent);
 	}
+	if (chosen !== "" && chosen !== "none" && !labels.has(chosen)) {
+		const kept = document.createElement("option");   // a field this game does not send: kept, not lost
+		kept.value = chosen;
+		kept.textContent = chosen;
+		kept.selected = true;
+		list.appendChild(kept);
+	}
 	list.disabled = message.fields.length === 0;
 }
 
@@ -137,7 +144,8 @@ function choose() {
 	const id = el("choice").value;
 	const payload = { t: "choose", id };
 	if (el("show")) {
-		payload.show = el("show").value;
+		// Another command: back to its automatic state, not the field chosen for the previous one.
+		payload.show = last && id !== (last.settings.id ?? "") ? "" : el("show").value;
 	}
 	if (id === "convergence") {
 		payload.value = Number(el("distance").value) || 500;
