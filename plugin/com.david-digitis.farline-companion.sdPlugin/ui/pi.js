@@ -9,6 +9,9 @@ const TEXT = {
 		waiting: "Start the game, open Controls > Companion and tick Enable the companion.",
 		pick: "Pair first: the list comes from the game.",
 		hint: "In the game: Controls > Companion > Pair a device. The code is good for two minutes.",
+		none: "- choose -", wrong: "Wrong code: check the one the game shows.",
+		expired: "The code expired: click Pair a device again in the game.",
+		locked: "Too many wrong codes: wait a minute, then pair again.", off: "The game is not reachable.",
 	},
 	fr: {
 		link: "Jeu", code: "Code affiché dans le jeu", pair: "Appairer", forget: "Oublier ce Stream Deck",
@@ -16,6 +19,9 @@ const TEXT = {
 		waiting: "Lancez le jeu, ouvrez Commandes > Companion et cochez Activer le companion.",
 		pick: "Appairez d'abord : la liste vient du jeu.",
 		hint: "Dans le jeu : Commandes > Companion > Appairer un appareil. Le code vaut deux minutes.",
+		none: "- choisir -", wrong: "Code faux : vérifiez celui qu'affiche le jeu.",
+		expired: "Le code a expiré : cliquez de nouveau sur Appairer un appareil dans le jeu.",
+		locked: "Trop de codes faux : attendez une minute, puis appairez de nouveau.", off: "Le jeu n'est pas joignable.",
 	},
 };
 
@@ -44,6 +50,11 @@ function fillChoices(message) {
 	const list = el("choice");
 	const chosen = kind === "command" ? message.settings.id : message.settings.field;
 	list.replaceChildren();
+	const none = document.createElement("option");
+	none.value = "";
+	none.textContent = words().none;
+	none.selected = !chosen;
+	list.appendChild(none);
 	for (const group of message.choices) {
 		const parent = group.group ? document.createElement("optgroup") : list;
 		if (group.group) {
@@ -78,6 +89,9 @@ function draw(message) {
 	el("status").className = "status " + message.status;
 	el("waiting").hidden = message.status !== "off" && message.status !== "connecting";
 	el("pairing").hidden = message.status !== "unpaired";
+	if (message.status === "paired") {
+		el("pair-result").textContent = "";
+	}
 	el("forget").hidden = message.status !== "paired";
 	el("choice-empty").textContent = w.pick;
 	fillChoices(message);
@@ -96,8 +110,8 @@ function wire() {
 	el("pair").addEventListener("click", () => {
 		const code = el("code").value.replace(/\D/g, "");
 		if (code.length === 6) {
+			el("pair-result").textContent = "";
 			toPlugin({ t: "pair", code });
-			el("code").value = "";
 		}
 	});
 	el("forget").addEventListener("click", () => toPlugin({ t: "forget" }));
@@ -121,6 +135,8 @@ window.connectElgatoStreamDeckSocket = (port, uuid, registerEvent, info, actionI
 		const message = JSON.parse(event.data);
 		if (message.event === "sendToPropertyInspector" && message.payload?.t === "link") {
 			draw(message.payload);
+		} else if (message.event === "sendToPropertyInspector" && message.payload?.t === "pair") {
+			el("pair-result").textContent = words()[message.payload.why] ?? message.payload.why;
 		}
 	};
 	if (last) {
