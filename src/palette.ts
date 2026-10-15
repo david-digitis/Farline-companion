@@ -11,10 +11,14 @@ export const INK = "#ece8e1";
 export const INK_DIM = "#ece8e199";
 /** INK_DISABLED: INK at 38 %, for a key that does nothing here. */
 export const INK_OFF = "#ece8e161";
+/** TRACK: INK at 12 %, the empty part of a bar. */
+export const INK_TRACK = "#ece8e11f";
 /** MINT: me, positive, the engine, the speed. */
 export const MINT = "#3ee6b4";
 /** CORAL: danger, weapons, g, alerts. */
 export const CORAL = "#ff5e5b";
+/** CORAL at 10 %: the tint of a coral block (a refused key). */
+export const CORAL_TINT = "#ff5e5b1a";
 /** BLUE: the shield. */
 export const BLUE = "#8fb8ff";
 

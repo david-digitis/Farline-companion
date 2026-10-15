@@ -1,36 +1,44 @@
 // What a key shows, drawn as an SVG (144 x 144, the Stream Deck's @2x key) and handed to
-// setImage as a data URI. The game's style: a dark screen, cut corners, 1 px strokes, three
-// accents (palette.ts). No glow, no gradient, no rounded corner.
+// setImage as a data URI. The game's Tactical style, as Hatalar chose it on the board of
+// 2026-10-15 (style 4): no frame, a large Material Symbols Sharp pictogram, everything in ink and
+// the accent only on the state (ON in mint, the shield in blue, a refusal in coral), a value as a
+// number with its track below. No glow, no gradient, no rounded corner, no shadow.
+// Fonts are the system's: Chakra Petch / DM Mono when the player has them (an embedded font made
+// each image 80 times heavier), Bahnschrift / Consolas otherwise.
 
-import { accentOf, BG, CORAL, INK, INK_DIM, INK_OFF, MINT } from "./palette.js";
+import { accentOf, BG, CORAL, CORAL_TINT, INK, INK_DIM, INK_OFF, INK_TRACK, MINT } from "./palette.js";
 import type { Field, Value } from "./schema.js";
+import { glyph } from "./symbols.js";
 
 const SIZE = 144;
-const CUT = 18;
-const FONT = "DM Mono, Consolas, monospace";
+const CUT = 16;
+const NUM_FONT = "Chakra Petch, Bahnschrift, DIN Alternate, Arial Narrow, sans-serif";
+const LABEL_FONT = "DM Mono, Consolas, Menlo, monospace";
+
+/** A pictogram from the table (icons.ts): a Material Symbols Sharp name, filled or line. */
+export type Icon = { symbol: string; fill: boolean };
 
 function escape(text: string): string {
 	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-/** The key's frame: a box with two cut corners, its stroke in `stroke`. */
-function frame(stroke: string): string {
-	const s = SIZE - 6;
-	const points = `3,${3 + CUT} ${3 + CUT},3 ${s + 3},3 ${s + 3},${s + 3 - CUT} ${s + 3 - CUT},${s + 3} 3,${s + 3}`;
-	return `<rect width="${SIZE}" height="${SIZE}" fill="${BG}"/>`
-		+ `<polygon points="${points}" fill="none" stroke="${stroke}" stroke-width="2"/>`;
+/** The key's dark screen, tinted inside its cut corners for a coral block. */
+function ground(tint = ""): string {
+	const s = SIZE - 4;
+	const cut = `2,${2 + CUT} ${2 + CUT},2 ${s + 2},2 ${s + 2},${s + 2 - CUT} ${s + 2 - CUT},${s + 2} 2,${s + 2}`;
+	return `<rect width="${SIZE}" height="${SIZE}" fill="${BG}"/>` + (tint !== "" ? `<polygon points="${cut}" fill="${tint}"/>` : "");
 }
 
-function text(x: number, y: number, size: number, colour: string, body: string, weight = 400): string {
-	return `<text x="${x}" y="${y}" font-family="${FONT}" font-size="${size}" font-weight="${weight}" `
-		+ `fill="${colour}" text-anchor="middle">${escape(body)}</text>`;
+function text(x: number, y: number, size: number, colour: string, body: string, opts: { num?: boolean; anchor?: string } = {}): string {
+	const font = opts.num ? `font-family="${NUM_FONT}" font-weight="700"` : `font-family="${LABEL_FONT}" font-weight="400"`;
+	return `<text x="${x}" y="${y}" ${font} font-size="${size}" fill="${colour}" text-anchor="${opts.anchor ?? "middle"}">${escape(body)}</text>`;
 }
 
 function svg(body: string): string {
 	return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">${body}</svg>`;
 }
 
-/** Up to three short lines of a label, cut at word boundaries, about 11 characters each. */
+/** Up to `lines` short lines of a label, cut at word boundaries, `width` characters each. */
 export function wrap(label: string, width = 11, lines = 3): string[] {
 	const out: string[] = [];
 	let line = "";
@@ -53,6 +61,17 @@ export function wrap(label: string, width = 11, lines = 3): string[] {
 	return out.map((l) => (l.length > width ? `${l.slice(0, width - 1)}…` : l));
 }
 
+/** A label as a key prints it: capitals, without what is in brackets. */
+export function caption(label: string): string {
+	return label.replace(/\s*\([^)]*\)/g, "").toUpperCase();
+}
+
+/** Lines of text centred around `mid`, `step` apart. */
+function block(lines: string[], mid: number, size: number, step: number, colour: string): string {
+	const top = mid - ((lines.length - 1) * step) / 2 + size * 0.35;
+	return lines.map((line, i) => text(72, top + i * step, size, colour, line)).join("");
+}
+
 const MAX_TEXT = 10;
 
 /** A number as a key shows it: whole for %, m, m/s, mm; one decimal for g and s; two at most otherwise. */
@@ -66,8 +85,8 @@ export function numberText(value: number, unit: string): string {
 	return String(Math.round(value * 100) / 100);
 }
 
-function capped(text: string): string {
-	return text.length > MAX_TEXT ? `${text.slice(0, MAX_TEXT - 1)}…` : text;
+function capped(body: string): string {
+	return body.length > MAX_TEXT ? `${body.slice(0, MAX_TEXT - 1)}…` : body;
 }
 
 /** The shown form of a value: "142 m/s", "ON", "—". */
@@ -85,33 +104,71 @@ export function shown(field: Field | undefined, value: Value | undefined): { big
 	return { big: capped(value.toUpperCase()), unit: "", colour: accentOf(id) };
 }
 
-/** A value key: the value large, its unit, the label small above. */
-export function valueKey(field: Field | undefined, value: Value | undefined, label: string, off = false): string {
+/** How full a value's track is (0..1), or null when it has none (a number without a known top). */
+export function fillOf(field: Field | undefined, value: Value | undefined): number | null {
+	if (typeof value === "boolean") {
+		return value ? 1 : 0;
+	}
+	if (typeof value === "number" && field?.unit === "%") {
+		return Math.max(0, Math.min(1, value / 100));
+	}
+	return null;
+}
+
+function numberSize(big: string, max: number): number {
+	return big.length <= 3 ? max : big.length <= 5 ? Math.round(max * 0.78) : Math.round(max * 0.5);
+}
+
+/** A value key: its pictogram and label on top, the value large in its accent, a % or a flag with its track. */
+export function valueKey(field: Field | undefined, value: Value | undefined, label: string, icon: Icon | null = null, off = false): string {
 	const v = shown(field, value);
-	const size = v.big.length <= 4 ? 46 : v.big.length <= 6 ? 34 : 22;
-	const head = wrap(label, 14, 2).map((line, i) => text(72, 30 + i * 16, 14, INK_DIM, line)).join("");
-	const unit = v.unit !== "" ? text(72, 124, 16, INK_DIM, v.unit) : "";
-	return svg(frame(off ? INK_OFF : INK_DIM) + head + text(72, 96, size, off ? INK_OFF : v.colour, v.big, 600) + unit);
+	const colour = off ? INK_OFF : v.colour;
+	const head = icon !== null
+		? glyph(icon.symbol, icon.fill, 14, 14, 22, off ? INK_OFF : INK_DIM) + text(42, 31, 12, INK_DIM, wrap(caption(label), 12, 1)[0] ?? "", { anchor: "start" })
+		: text(72, 30, 12, INK_DIM, wrap(caption(label), 16, 1)[0] ?? "");
+	const track = fillOf(field, value);
+	if (track === null) {
+		const unit = v.unit !== "" ? text(72, 124, 15, INK_DIM, v.unit) : "";
+		return svg(ground() + head + text(72, 96, numberSize(v.big, 52), colour, v.big, { num: true }) + unit);
+	}
+	const w = 112;
+	const bar = `<rect x="16" y="112" width="${w}" height="8" fill="${INK_TRACK}"/>`
+		+ (track > 0 ? `<rect x="16" y="112" width="${Math.round(w * track)}" height="8" fill="${colour}"/>` : "");
+	const num = text(v.unit !== "" ? 64 : 72, 92, numberSize(v.big, 46), colour, v.big, { num: true });
+	const unit = v.unit !== "" ? text(104, 92, 15, INK_DIM, v.unit, { anchor: "start" }) : "";
+	return svg(ground() + head + num + unit + bar);
 }
 
-/** A command key: its short label in the box (the provisional pictogram until the real icons). */
-export function commandKey(label: string, off = false): string {
-	const lines = wrap(label);
-	const top = 72 - ((lines.length - 1) * 22) / 2 + 7;
-	const body = lines.map((line, i) => text(72, top + i * 22, 20, off ? INK_OFF : INK, line)).join("");
-	return svg(frame(off ? INK_OFF : MINT) + body);
+/** A command key: its pictogram large and its label below, or its label alone when it has no pictogram. */
+export function commandKey(label: string, icon: Icon | null = null, off = false): string {
+	const ink = off ? INK_OFF : INK;
+	if (icon === null) {
+		return svg(ground() + block(wrap(caption(label), 11, 3), 72, 15, 21, ink));
+	}
+	const lines = wrap(caption(label), 15, 2);
+	return svg(ground() + glyph(icon.symbol, icon.fill, 40, lines.length > 1 ? 14 : 20, 64, ink)
+		+ block(lines, lines.length > 1 ? 112 : 116, 12, 15, off ? INK_OFF : INK_DIM));
 }
 
-/** A refused press: the key in coral for a moment, the reason small. */
-export function refusedKey(label: string, why: string): string {
-	const lines = wrap(label, 11, 2).map((line, i) => text(72, 54 + i * 22, 20, INK, line)).join("");
-	return svg(frame(CORAL) + lines + text(72, 120, 16, CORAL, why.toUpperCase(), 600));
+/** A key of the profiles drawn once (a folder, Back, Next): its pictogram, room below for the
+ *  software's title, and for a folder the accent ››› of the game's panel titles, drawn as strokes
+ *  (no text: the same picture on every machine, whatever its fonts). */
+export function navKey(icon: Icon, folder = false): string {
+	const chevrons = [60, 70, 80].map((x) => `M${x} 92L${x + 5} 97L${x} 102`).join("");
+	const mark = folder ? `<path d="${chevrons}" fill="none" stroke="${MINT}" stroke-width="2"/>` : "";
+	return svg(ground() + glyph(icon.symbol, icon.fill, 44, 18, 56, INK) + mark);
+}
+
+/** A refused press: the key tinted coral for a moment, its pictogram (or label) and the reason. */
+export function refusedKey(label: string, why: string, icon: Icon | null = null): string {
+	const face = icon !== null ? glyph(icon.symbol, icon.fill, 48, 22, 48, CORAL) : block(wrap(caption(label), 11, 2), 60, 15, 21, INK);
+	return svg(ground(CORAL_TINT) + face + text(72, 112, 14, CORAL, why.toUpperCase()));
 }
 
 /** The game is not running, or not paired: one word on a dimmed key. */
-export function idleKey(word: string): string {
-	const lines = wrap(word, 11, 2).map((line, i) => text(72, 70 + i * 22, 18, INK_OFF, line)).join("");
-	return svg(frame(INK_OFF) + lines);
+export function idleKey(word: string, icon: Icon | null = null): string {
+	const pic = icon !== null ? glyph(icon.symbol, icon.fill, 52, 30, 40, INK_OFF) : "";
+	return svg(ground() + pic + block(wrap(word.toUpperCase(), 11, 2), pic !== "" ? 100 : 72, 14, 19, INK_OFF));
 }
 
 /** An SVG as setImage takes it. */
