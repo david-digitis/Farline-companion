@@ -9,6 +9,7 @@ import {
 import type { JsonObject } from "@elgato/utils";
 
 import { language, link, pairingMessage, sendInspector, t } from "../hub.js";
+import { fieldIcon, NAV_ICONS } from "../icons.js";
 import { idleKey, valueKey } from "../render.js";
 import { findField, labelOf, type Value } from "../schema.js";
 import { Painter } from "./painter.js";
@@ -75,10 +76,10 @@ export class ValueAction extends SingletonAction<ValueSettings> {
 	private redraw(key: KeyAction<ValueSettings>): void {
 		const id = this.fields.get(key.id) ?? "";
 		if (link.status !== "paired") {
-			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : link.status === "outdated" ? t("outdated_short") : t("game_off")));
+			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : link.status === "outdated" ? t("outdated_short") : t("game_off"), NAV_ICONS.idle));
 			return;
 		}
 		const field = findField(link.schema, id);
-		this.painter.paint(key, valueKey(field, link.state.get(id), field ? labelOf(field, language()) : id));
+		this.painter.paint(key, valueKey(field, link.state.get(id), field ? labelOf(field, language()) : id, fieldIcon(id)));
 	}
 }

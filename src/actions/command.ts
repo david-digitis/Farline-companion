@@ -10,6 +10,7 @@ import streamDeck, {
 import type { JsonObject } from "@elgato/utils";
 
 import { language, link, pairingMessage, sendInspector, t } from "../hub.js";
+import { commandIcon, NAV_ICONS } from "../icons.js";
 import { commandKey, idleKey, refusedKey } from "../render.js";
 import { findCommand, labelOf } from "../schema.js";
 import { Painter } from "./painter.js";
@@ -85,12 +86,12 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 			return;
 		}
 		if (link.status !== "paired") {
-			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : link.status === "outdated" ? t("outdated_short") : t("game_off")));
+			this.painter.paint(key, idleKey(link.status === "unpaired" ? t("pair_short") : link.status === "outdated" ? t("outdated_short") : t("game_off"), NAV_ICONS.idle));
 			return;
 		}
 		const command = findCommand(link.schema, settings.id ?? "");
 		const label = command ? labelOf(command, language()) : (settings.id ?? "?");
-		this.painter.paint(key, commandKey(command?.kind === "set" ? `${label} ${settings.value ?? ""} m` : label));
+		this.painter.paint(key, commandKey(command?.kind === "set" ? `${label} ${settings.value ?? ""} m` : label, commandIcon(settings.id ?? "")));
 	}
 
 	private refused(refusal: { id: string; why: string }): void {
@@ -103,7 +104,7 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 					return;
 				}
 				const command = findCommand(link.schema, refusal.id);
-				this.painter.paint(key, refusedKey(command ? labelOf(command, language()) : refusal.id, refusal.why));
+				this.painter.paint(key, refusedKey(command ? labelOf(command, language()) : refusal.id, refusal.why, commandIcon(refusal.id)));
 				this.flashing.add(key.id);
 				setTimeout(() => {
 					this.flashing.delete(key.id);
