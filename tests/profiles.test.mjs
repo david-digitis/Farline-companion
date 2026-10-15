@@ -64,6 +64,12 @@ for (const model of MODELS) {
 					} else {
 						assert.equal(key.UUID, BACK);
 					}
+					if (key.UUID === OPEN || key.UUID === BACK) {
+						const image = key.States[0].Image;
+						assert.match(image ?? "", /^Images\/[0-9A-Z]{25}Z\.png$/, `${at}: a folder, Back or Next has its picture`);
+						const file = Object.keys(files).find((n) => n.endsWith(`/Profiles/${id}/${image}`));
+						assert.ok(file && files[file].subarray(1, 4).toString() === "PNG", `${image} is in the page, as a PNG`);
+					}
 				}
 			}
 		});
