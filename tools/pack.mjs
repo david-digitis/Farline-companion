@@ -13,20 +13,25 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGIN = path.join(ROOT, "plugin", "com.david-digitis.farline-companion.sdPlugin");
 const MANIFEST = path.join(PLUGIN, "manifest.json");
 
-/** The build number: minutes since 2026-01-01 UTC, always rising, a plain number. */
+/** The build number: seconds since 2026-01-01 UTC, always rising, a plain number. */
 export function buildNumber(now = Date.now()) {
-	return Math.floor((now - Date.UTC(2026, 0, 1)) / 60000);
+	return Math.floor((now - Date.UTC(2026, 0, 1)) / 1000);
 }
 
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
 const original = fs.readFileSync(MANIFEST);
 const manifest = JSON.parse(original.toString("utf8"));
 manifest.Version = `${pkg.version}.${buildNumber()}`;
+const restore = () => fs.writeFileSync(MANIFEST, original);
+process.on("SIGINT", () => {   // Ctrl-C during the pack: the committed manifest comes back first
+	restore();
+	process.exit(130);
+});
 try {
 	fs.writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, "\t")}\n`);
 	const cli = path.join(ROOT, "node_modules", "@elgato", "cli", "bin", "streamdeck.mjs");
 	execFileSync(process.execPath, [cli, "pack", PLUGIN, "--output", path.join(ROOT, "dist"), "--force"], { stdio: "inherit" });
 	console.log(`version ${manifest.Version}`);
 } finally {
-	fs.writeFileSync(MANIFEST, original);
+	restore();
 }
