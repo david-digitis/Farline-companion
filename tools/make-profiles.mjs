@@ -60,8 +60,9 @@ function state(title) {
 	return { FontSize: 11, ShowTitle: title !== "", Title: title, TitleAlignment: "bottom", TitleColor: "#ece8e1" };
 }
 
-function key(name, uuid, settings, title = "", plugin = PLUGIN_INFO) {
-	const out = { ActionID: uuidOf(`${name}/${JSON.stringify(settings)}/${title}`), LinkedTitle: true, Name: name,
+/** A key; `where` (its page and slot) makes its ActionID unique in the profile. */
+function key(where, name, uuid, settings, title = "", plugin = PLUGIN_INFO) {
+	const out = { ActionID: uuidOf(`${where}/${name}/${JSON.stringify(settings)}`), LinkedTitle: true, Name: name,
 		Resources: null, Settings: settings, State: 0, States: [state(title)], UUID: uuid };
 	if (plugin) {
 		out.Plugin = plugin;
@@ -70,15 +71,18 @@ function key(name, uuid, settings, title = "", plugin = PLUGIN_INFO) {
 }
 
 /** The key of a block's entry: a Command (its id) or a Value (its field). */
-function entryKey(k) {
-	return k.c !== undefined ? key("Command", COMMAND, { id: k.c }) : key("Value", VALUE, { field: k.v });
+function entryKey(where, k) {
+	return k.c !== undefined ? key(where, "Command", COMMAND, { id: k.c })
+		: key(where, "Value", VALUE, { field: k.v });
 }
 
 /** The units of a tab: its blocks, then its commands not already in a block, one key each. */
 export function unitsOf(tab, schema) {
 	const blocks = BLOCKS[tab] ?? [];
 	const taken = new Set(blocks.flat().filter((k) => k.c !== undefined).map((k) => k.c));
-	const commands = schema.commands.filter((c) => c.tab === tab && c.kind !== "hold" && !c.deprecated && !taken.has(c.id));
+	// A "set" command needs a value chosen by the player (the convergence distance): not a key of its own here.
+	const commands = schema.commands.filter((c) => c.tab === tab && (c.kind === "press" || c.kind === "delta")
+		&& !c.deprecated && !taken.has(c.id));
 	return [...blocks, ...commands.map((c) => [{ c: c.id }])];
 }
 
@@ -113,6 +117,9 @@ export function paginate(units, root = false) {
 		const placed = [];
 		fillRow(root && pages.length === 0 ? ["0,0", ...TOP] : TOP, left, placed);
 		fillRow(BOTTOM, left, placed);
+		if (placed.length === 0) {
+			throw new Error(`a block of ${left[0].length} keys fits no row of 3: ${JSON.stringify(left[0])}`);
+		}
 		let next = NEXT_SLOT;
 		if (left.length > 0) {
 			next = nextSlot(placed);
@@ -145,11 +152,11 @@ function chain(name, pages, toKeys, root, files, dials, lang) {
 	pages.forEach((page, i) => {
 		const actions = {};
 		if (!root || i > 0) {
-			actions["0,0"] = key("Parent Folder", BACK, {}, "", null);
+			actions["0,0"] = key(`${ids[i]}/0,0`, "Parent Folder", BACK, {}, "", null);
 		}
-		Object.assign(actions, toKeys(page.slots));
+		Object.assign(actions, toKeys(page.slots, ids[i]));
 		if (page.more) {
-			actions[page.next] = key("Create Folder", OPEN, { ProfileUUID: ids[i + 1] }, lang === "fr" ? "Suite ▸" : "Next ▸",
+			actions[page.next] = key(`${ids[i]}/${page.next}`, "Create Folder", OPEN, { ProfileUUID: ids[i + 1] }, lang === "fr" ? "Suite ▸" : "Next ▸",
 				{ Name: "Create Folder", UUID: OPEN, Version: "1.0" });
 		}
 		files.push({ id: ids[i], manifest: { Controllers: controllers(actions, dials), Icon: "", Name: "" } });
@@ -167,15 +174,15 @@ export function pagesOf(schema, lang, dials) {
 		return [{ folder: label(t, lang), page: first }];
 	});
 	const rootPages = paginate(folders, true);
-	const root = chain(`root/${lang}/${dials}`, rootPages, (slots) => Object.fromEntries(Object.entries(slots).map(
-		([at, f]) => [at, key("Create Folder", OPEN, { ProfileUUID: f.page }, f.folder,
+	const root = chain(`root/${lang}/${dials}`, rootPages, (slots, page) => Object.fromEntries(Object.entries(slots).map(
+		([at, f]) => [at, key(`${page}/${at}`, "Create Folder", OPEN, { ProfileUUID: f.page }, f.folder,
 			{ Name: "Create Folder", UUID: OPEN, Version: "1.0" })])), true, files, dials, lang);
 	files.sort((a, b) => (a.id === root ? -1 : b.id === root ? 1 : 0));
 	return files;
 }
 
-function slotKeys(slots) {
-	return Object.fromEntries(Object.entries(slots).map(([at, k]) => [at, entryKey(k)]));
+function slotKeys(slots, page) {
+	return Object.fromEntries(Object.entries(slots).map(([at, k]) => [at, entryKey(`${page}/${at}`, k)]));
 }
 
 /** One .streamDeckProfile: {name, buffer}. */
