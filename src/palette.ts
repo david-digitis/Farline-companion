@@ -36,3 +36,14 @@ export function accentOf(field: string): string {
 	}
 	return MINT_FIELDS.has(field) ? MINT : INK;
 }
+
+/** A colour as an SVG attribute that every renderer reads alike: #rrggbb, and a see-through one
+ *  (#rrggbbaa in this file) split into #rrggbb plus fill-opacity. The Stream Deck software is
+ *  built on Qt, which reads eight digits as #aarrggbb. */
+export function fill(colour: string): string {
+	if (colour.length !== 9) {
+		return `fill="${colour}"`;
+	}
+	const alpha = Math.round((parseInt(colour.slice(7), 16) / 255) * 100) / 100;
+	return `fill="${colour.slice(0, 7)}" fill-opacity="${alpha}"`;
+}

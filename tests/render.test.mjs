@@ -59,7 +59,8 @@ test("every state: no rounded corner, no gradient, no glow, no shadow", () => {
 		"back": navKey(NAV_ICONS.back),
 	};
 	for (const [name, svg] of Object.entries(states)) {
-		assert.doesNotMatch(svg, /rx=|ry=|Gradient|filter|blur|shadow|opacity|<image|<svg[^>]*>.*<svg/, name);
+		assert.doesNotMatch(svg, /rx=|ry=|Gradient|filter|blur|shadow|[^-]opacity|<image|<svg[^>]*>.*<svg/, name);
+		assert.doesNotMatch(svg, /#[0-9a-f]{8}"/, `${name}: no #rrggbbaa (Qt reads it as #aarrggbb)`);
 		assert.match(svg, /^<svg [^>]*width="144" height="144"/, name);
 	}
 });
@@ -82,6 +83,14 @@ test("a track for a % and a flag only, full or empty", () => {
 	assert.equal(fillOf(gear, false), 0);
 	assert.equal(fillOf(speed, 142), null);
 	assert.doesNotMatch(valueKey(speed, 142, "Speed"), /height="8"/);
+});
+
+test("a % of three digits ends before its unit; a long word fits the key; a chosen value keeps its unit", () => {
+	assert.match(valueKey(shield, 100, "Shield"), /x="100" [^>]*text-anchor="end">100</);
+	const where = { id: "context", type: "string", unit: "" };
+	const size = Number(/font-size="(\d+)"[^>]*>SPACE_EVA…</.exec(valueKey(where, "space_eva_long", "Where"))?.[1]);
+	assert.ok(size * 0.62 * 10 <= 124, `a 10-character word at ${size} px`);
+	assert.match(commandKey("Convergence distance", null, "500 m"), />500 m</);
 });
 
 test("a caption: capitals, without brackets", () => {

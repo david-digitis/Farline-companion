@@ -91,7 +91,7 @@ export class CommandAction extends SingletonAction<CommandSettings> {
 		}
 		const command = findCommand(link.schema, settings.id ?? "");
 		const label = command ? labelOf(command, language()) : (settings.id ?? "?");
-		this.painter.paint(key, commandKey(command?.kind === "set" ? `${label} ${settings.value ?? ""} m` : label, commandIcon(settings.id ?? "")));
+		this.painter.paint(key, commandKey(label, commandIcon(settings.id ?? ""), command?.kind === "set" ? `${settings.value ?? ""} m` : ""));
 	}
 
 	private refused(refusal: { id: string; why: string }): void {

@@ -6,7 +6,7 @@
 // Fonts are the system's: Chakra Petch / DM Mono when the player has them (an embedded font made
 // each image 80 times heavier), Bahnschrift / Consolas otherwise.
 
-import { accentOf, BG, CORAL, CORAL_TINT, INK, INK_DIM, INK_OFF, INK_TRACK, MINT } from "./palette.js";
+import { accentOf, BG, CORAL, CORAL_TINT, fill, INK, INK_DIM, INK_OFF, INK_TRACK, MINT } from "./palette.js";
 import type { Field, Value } from "./schema.js";
 import { glyph } from "./symbols.js";
 
@@ -26,12 +26,12 @@ function escape(text: string): string {
 function ground(tint = ""): string {
 	const s = SIZE - 4;
 	const cut = `2,${2 + CUT} ${2 + CUT},2 ${s + 2},2 ${s + 2},${s + 2 - CUT} ${s + 2 - CUT},${s + 2} 2,${s + 2}`;
-	return `<rect width="${SIZE}" height="${SIZE}" fill="${BG}"/>` + (tint !== "" ? `<polygon points="${cut}" fill="${tint}"/>` : "");
+	return `<rect width="${SIZE}" height="${SIZE}" fill="${BG}"/>` + (tint !== "" ? `<polygon points="${cut}" ${fill(tint)}/>` : "");
 }
 
 function text(x: number, y: number, size: number, colour: string, body: string, opts: { num?: boolean; anchor?: string } = {}): string {
 	const font = opts.num ? `font-family="${NUM_FONT}" font-weight="700"` : `font-family="${LABEL_FONT}" font-weight="400"`;
-	return `<text x="${x}" y="${y}" ${font} font-size="${size}" fill="${colour}" text-anchor="${opts.anchor ?? "middle"}">${escape(body)}</text>`;
+	return `<text x="${x}" y="${y}" ${font} font-size="${size}" ${fill(colour)} text-anchor="${opts.anchor ?? "middle"}">${escape(body)}</text>`;
 }
 
 function svg(body: string): string {
@@ -115,16 +115,17 @@ export function fillOf(field: Field | undefined, value: Value | undefined): numb
 	return null;
 }
 
-function numberSize(big: string, max: number): number {
-	return big.length <= 3 ? max : big.length <= 5 ? Math.round(max * 0.78) : Math.round(max * 0.5);
+/** The size of a number or a word so that it fits `room` px: a bold character is about 0.62 of its size. */
+function numberSize(big: string, max: number, room = 124): number {
+	return Math.min(max, Math.floor(room / (Math.max(1, big.length) * 0.62)));
 }
 
 /** A value key: its pictogram and label on top, the value large in its accent, a % or a flag with its track. */
-export function valueKey(field: Field | undefined, value: Value | undefined, label: string, icon: Icon | null = null, off = false): string {
+export function valueKey(field: Field | undefined, value: Value | undefined, label: string, icon: Icon | null = null): string {
 	const v = shown(field, value);
-	const colour = off ? INK_OFF : v.colour;
+	const colour = v.colour;
 	const head = icon !== null
-		? glyph(icon.symbol, icon.fill, 14, 14, 22, off ? INK_OFF : INK_DIM) + text(42, 31, 12, INK_DIM, wrap(caption(label), 12, 1)[0] ?? "", { anchor: "start" })
+		? glyph(icon.symbol, icon.fill, 14, 14, 22, INK_DIM) + text(42, 31, 12, INK_DIM, wrap(caption(label), 12, 1)[0] ?? "", { anchor: "start" })
 		: text(72, 30, 12, INK_DIM, wrap(caption(label), 16, 1)[0] ?? "");
 	const track = fillOf(field, value);
 	if (track === null) {
@@ -132,22 +133,25 @@ export function valueKey(field: Field | undefined, value: Value | undefined, lab
 		return svg(ground() + head + text(72, 96, numberSize(v.big, 52), colour, v.big, { num: true }) + unit);
 	}
 	const w = 112;
-	const bar = `<rect x="16" y="112" width="${w}" height="8" fill="${INK_TRACK}"/>`
-		+ (track > 0 ? `<rect x="16" y="112" width="${Math.round(w * track)}" height="8" fill="${colour}"/>` : "");
-	const num = text(v.unit !== "" ? 64 : 72, 92, numberSize(v.big, 46), colour, v.big, { num: true });
+	const bar = `<rect x="16" y="112" width="${w}" height="8" ${fill(INK_TRACK)}/>`
+		+ (track > 0 ? `<rect x="16" y="112" width="${Math.round(w * track)}" height="8" ${fill(colour)}/>` : "");
+	const num = v.unit !== ""
+		? text(100, 92, numberSize(v.big, 46, 84), colour, v.big, { num: true, anchor: "end" })
+		: text(72, 92, numberSize(v.big, 46), colour, v.big, { num: true });
 	const unit = v.unit !== "" ? text(104, 92, 15, INK_DIM, v.unit, { anchor: "start" }) : "";
 	return svg(ground() + head + num + unit + bar);
 }
 
-/** A command key: its pictogram large and its label below, or its label alone when it has no pictogram. */
-export function commandKey(label: string, icon: Icon | null = null, off = false): string {
-	const ink = off ? INK_OFF : INK;
+/** A command key: its pictogram large and its label below, or its label alone when it has no
+ *  pictogram; `detail` (a chosen value with its unit, "500 m") follows the label as it is. */
+export function commandKey(label: string, icon: Icon | null = null, detail = ""): string {
+	const words = detail !== "" ? `${caption(label)} ${detail}` : caption(label);
 	if (icon === null) {
-		return svg(ground() + block(wrap(caption(label), 11, 3), 72, 15, 21, ink));
+		return svg(ground() + block(wrap(words, 11, 3), 72, 15, 21, INK));
 	}
-	const lines = wrap(caption(label), 15, 2);
-	return svg(ground() + glyph(icon.symbol, icon.fill, 40, lines.length > 1 ? 14 : 20, 64, ink)
-		+ block(lines, lines.length > 1 ? 112 : 116, 12, 15, off ? INK_OFF : INK_DIM));
+	const lines = wrap(words, 15, 2);
+	return svg(ground() + glyph(icon.symbol, icon.fill, 40, lines.length > 1 ? 14 : 20, 64, INK)
+		+ block(lines, lines.length > 1 ? 112 : 116, 12, 15, INK_DIM));
 }
 
 /** A key of the profiles drawn once (a folder, Back, Next): its pictogram, room below for the

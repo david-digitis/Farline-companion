@@ -6,7 +6,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const paths = new Map<string, string>();
+import { fill as paint } from "./palette.js";
+
+const paths = new Map<string, string | null>();
 let folder = "";
 
 /** Where the symbol files are: the plugin's imgs/symbols, or the same folder from a tool. */
@@ -23,9 +25,8 @@ export function fileOf(symbol: string, fill: boolean): string {
 /** The path data of a glyph, read once; null when the file is not there. */
 export function pathOf(symbol: string, fill: boolean): string | null {
 	const name = fileOf(symbol, fill);
-	const known = paths.get(name);
-	if (known !== undefined) {
-		return known;
+	if (paths.has(name)) {
+		return paths.get(name) ?? null;
 	}
 	if (folder === "") {
 		return null;
@@ -37,9 +38,7 @@ export function pathOf(symbol: string, fill: boolean): string | null {
 	} catch {
 		d = null;
 	}
-	if (d !== null) {
-		paths.set(name, d);
-	}
+	paths.set(name, d);   // a missing glyph too: never read again on each repaint
 	return d;
 }
 
@@ -50,5 +49,5 @@ export function glyph(symbol: string, fill: boolean, x: number, y: number, size:
 		return "";
 	}
 	const k = size / 960;
-	return `<path transform="translate(${x} ${y + size}) scale(${k})" fill="${colour}" d="${d}"/>`;
+	return `<path transform="translate(${x} ${y + size}) scale(${k})" ${paint(colour)} d="${d}"/>`;
 }
